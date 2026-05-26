@@ -126,6 +126,10 @@ Detecția modificărilor neautorizate și generarea alertei.
 **4. Modulul IOC Checker:**
 Extragerea indicatorilor din log-uri și analiza reputației via VirusTotal.
 ![Analiză IOC](screenshots/ioc.jpeg)
+
+**5. Alerta Telegram:**
+Alerta telegram generata de modulul F.I.M.
+![Alertă Telegram](screenshots/telegram.png)
 ---
 
 ### 5. REFERINȚE BIBLIOGRAFICE & RESURSE UTILIZATE
