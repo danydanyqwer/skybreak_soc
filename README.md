@@ -1,9 +1,9 @@
 
-## **Greuceanu_SOC – Security Operations Center & System Monitor**
+## **Skynet_SOC – Security Operations Center & System Monitor**
 
 ### 1. PREREQUISITES & RUN (Cerințe de sistem și Configurare)
 
-Aplicația **Greuceanu_SOC** este o platformă hibridă de monitorizare și securitate ce combină scripturi Python 3 cu apeluri de sistem și utilitare native din linia de comandă Linux (CLI).
+Aplicația **Skynet_SOC** este o platformă hibridă de monitorizare și securitate ce combină scripturi Python 3 cu apeluri de sistem și utilitare native din linia de comandă Linux (CLI).
 
 #### **Dependențe de sistem (Sistem de operare recomandat: Linux / Ubuntu / Debian)**
 
