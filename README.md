@@ -105,12 +105,6 @@ Proiectul a fost dezvoltat de la zero, având ca punct de pornire conceptele teo
 * **Filtrare Inteligentă:** Implementează o funcție dedicată de analiză a claselor de rețea (`_is_private_ip`) pentru a detecta și filtra adresele IP private sau de loopback (ex: `127.0.0.1`, `192.168.x.x`, `10.x.x.x`), împiedicând trimiterea de date locale inutile către internet.
 * **Threat Intelligence Integration:** Indicatorii publici extrași sunt transmiși controlat către **API-ul VirusTotal v3** (folosind encodare Base64 securizată pentru URL-uri). Răspunsul JSON pachetează date despre reputația globală a indicatorului, numărul de motoare antivirus care l-au flagat ca malițios, țara de origine și compania de hosting (AS Owner). Pe baza acestor date, backend-ul calculează algoritmic un scor global de risc (LOW, MEDIUM, HIGH, CRITICAL).
 
-
-
-#### **Pregătire pentru întrebări la evaluare:**
-
-* *De ce variabilă este la linia X?* -> În structura API-ului, majoritatea datelor de pe backend sunt transmise ca `dict` (dicționare Python), fiind serializate automat în format `JSON` (`jsonify`) pentru a fi consumate asincron de JavaScript în frontend.
-* *Ce face o anumită linie?* -> `subprocess.run` lansează un proces copil în sistemul de operare Linux, capturând stream-ul de ieșire (`stdout`) pentru a fi parsat în Python. `ThreadPoolExecutor` gestionează asincron execuția thread-urilor pentru a nu bloca procesul principal al serverului web.
 * *Amprenta de Securitate:* -> Clasa `EmailChecker` introduce un header HTTP custom în request-urile transmise rețelei globale: `{'X-Developed-By': 'Dan Grigorescu - ETTI'}` ca dovadă incontestabilă a paternității codului în timpul tranzitului de date.
 
 ---
@@ -119,7 +113,7 @@ Proiectul a fost dezvoltat de la zero, având ca punct de pornire conceptele teo
 
 *(Aici se vor introduce capturile de ecran realizate în timpul testării aplicației)*
 
-1. **Dashboard-ul Principal (Vatra):** Interfața grafică în stil terminal cyberpunk, prezentând cele 3 module.
+1. **Dashboard-ul Principal:** Interfața grafică în stil terminal cyberpunk, prezentând cele 3 module.
 2. **Modulul Port Scanner:** Rezultatul unei scanări pe `127.0.0.1` sau `scanme.nmap.org`, evidențiind tabelul de porturi, nivelul de risc și CVE-urile extrase din baza de date NIST.
 3. **Modulul FIM:** Interfața în momentul în care s-a detectat modificarea unui fișier, afișând statusul roșu de alertă în terminalul web.
 4. **Alerta Telegram:** Captură de ecran de pe telefon/PC cu mesajul primit instant de la Botul Telegram în momentul modificării fișierului.
