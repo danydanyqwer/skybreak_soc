@@ -111,13 +111,21 @@ Proiectul a fost dezvoltat de la zero, având ca punct de pornire conceptele teo
 
 ### 4. SCREENSHOT-URI DIN TIMPUL RULĂRII
 
-*(Aici se vor introduce capturile de ecran realizate în timpul testării aplicației)*
+**1. Dashboard-ul Principal (Skybreak_SOC):**
+Platforma centrală de monitorizare.
+![Dashboard Principal](screenshots/dashboard.jpeg)
 
-1. **Dashboard-ul Principal:** Interfața grafică în stil terminal cyberpunk, prezentând cele 3 module.
-2. **Modulul Port Scanner:** Rezultatul unei scanări pe `127.0.0.1` sau `scanme.nmap.org`, evidențiind tabelul de porturi, nivelul de risc și CVE-urile extrase din baza de date NIST.
-3. **Modulul FIM:** Interfața în momentul în care s-a detectat modificarea unui fișier, afișând statusul roșu de alertă în terminalul web.
-4. **Alerta Telegram:** Captură de ecran de pe telefon/PC cu mesajul primit instant de la Botul Telegram în momentul modificării fișierului.
+**2. Modulul Port Scanner:**
+Scanare hibridă (Nmap + NIST NVD) cu detecție de versiuni și mapare CVE.
+![Port Scanner](screenshots/scanner.jpeg)
 
+**3. Modulul F.I.M. (File Integrity Monitor):**
+Detecția modificărilor neautorizate și generarea alertei.
+![Alertă FIM](screenshots/fim.jpeg)
+
+**4. Modulul IOC Checker:**
+Extragerea indicatorilor din log-uri și analiza reputației via VirusTotal.
+![Analiză IOC](screenshots/ioc.jpeg)
 ---
 
 ### 5. REFERINȚE BIBLIOGRAFICE & RESURSE UTILIZATE
