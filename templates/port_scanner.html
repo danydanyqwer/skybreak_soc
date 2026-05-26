@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}SEC Toolkit | Port Scanner{% endblock %}
+{% block title %}Skybreak SOC | Port Scanner{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -10,6 +10,12 @@
 <div class="grid-2">
   <div class="card">
     <div class="card-title">CONFIGURARE SCANARE</div>
+
+    <label for="scanEngine">MOTOR DE SCANARE (TOOL)</label>
+    <select id="scanEngine">
+      <option value="sockets">Python Sockets (Foarte Rapid / Fără CVE-uri)</option>
+      <option value="nmap">Nmap -sV (Lent / Detecție precisă & CVE-uri)</option>
+    </select>
 
     <label for="targetHost">TARGET (IP SAU HOSTNAME)</label>
     <input type="text" id="targetHost" placeholder="ex: 192.168.1.1 sau scanme.nmap.org">
@@ -33,7 +39,7 @@
     
     <div class="loader" id="scanLoader">
       <div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div>
-      <span>Se trimit pachetele SYN... (poate dura în funcție de nr. porturilor)</span>
+      <span>Se procesează pachetele... (durata depinde de nr. porturilor și motorul ales)</span>
     </div>
   </div>
 
@@ -68,7 +74,7 @@
       </tr>
     </thead>
     <tbody>
-      </tbody>
+    </tbody>
   </table>
 </div>
 {% endblock %}
@@ -86,13 +92,14 @@
     const mode = document.getElementById('scanMode').value;
     const range = document.getElementById('portRange').value;
     const timeout = document.getElementById('scanTimeout').value;
+    const engine = document.getElementById('scanEngine').value;
     const log = document.getElementById('scanLog');
     const tableCard = document.getElementById('resultsTableCard');
     const tbody = document.getElementById('portsTable').querySelector('tbody');
 
-    log.innerHTML = `Inițializare secvență scanare pentru host-ul <b>${host}</b>...\n`;
+    log.innerHTML = `Inițializare secvență scanare cu motorul <b>${engine.toUpperCase()}</b> pentru host-ul <b>${host}</b>...\n`;
     tableCard.style.display = 'none';
-    tbody.innerHTML = ''; // Curata tabelul anterior
+    tbody.innerHTML = ''; 
 
     if (!host.trim()) {
       log.innerHTML += '<span class="err">[ERROR] Adresa target nespecificată.</span>';
@@ -105,28 +112,27 @@
         host: host,
         mode: mode,
         range: range,
-        timeout: timeout
+        timeout: timeout,
+        engine: engine
       });
 
       if (res.error) {
         log.innerHTML += `<span class="err">[ERROR] ${res.error}</span>`;
       } else {
-        // Actualizare statistici globale
         document.getElementById('statPorts').innerText = res.open_ports_count;
         const riskEl = document.getElementById('statRisk');
         riskEl.innerText = res.overall_risk;
         riskEl.style.color = res.overall_risk === 'LOW' ? 'var(--green)' : (res.overall_risk === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)');
 
-        // Log general din output prompt
         log.innerHTML = `
 <span class="ok">[SUCCESS] Scanare finalizată fără erori.</span>
 IP Rezolvat: ${res.ip}
 Durată Execuție: ${res.duration_seconds} secunde
 Total Porturi Interogate: ${res.ports_scanned}
 Mod Utilizat: ${res.scan_mode}
+Motor Execuție: ${engine.toUpperCase()}
         `;
 
-        // Populare Tabel Daca Exista Porturi Deschise
         if (res.open_ports.length > 0) {
           tableCard.style.display = 'block';
           
@@ -135,20 +141,31 @@ Mod Utilizat: ${res.scan_mode}
             if(p.risk === 'HIGH') badgeCls = 'badge-red';
             else if (p.risk === 'MEDIUM') badgeCls = 'badge-yellow';
 
+            let cveHtml = '';
+            if (p.cves && p.cves.length > 0) {
+              cveHtml = '<div style="font-size:0.75rem; color:var(--red); margin-top:0.3rem; line-height:1.4;">';
+              p.cves.forEach(c => {
+                cveHtml += `⚠️ <b>${c.id}</b> (Scor CVSS: ${c.score})<br>`;
+              });
+              cveHtml += '</div>';
+            }
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
               <td style="color:var(--green); font-weight:bold;">${p.port}</td>
               <td>${p.protocol.toUpperCase()}</td>
               <td><span class="ok">${p.state}</span></td>
-              <td>${p.service}</td>
+              <td>${p.service}${cveHtml}</td>
               <td><span class="badge ${badgeCls}">${p.risk}</span></td>
             `;
             tbody.appendChild(tr);
           });
+        } else {
+          log.innerHTML += `\n<span class="info">[INFO] Nu s-au găsit porturi deschise.</span>`;
         }
       }
     } catch (e) {
-      log.innerHTML += `<span class="err">[FATAL] Eroare de comunicare cu serverul backend. Verifică log-urile terminalului Python.</span>`;
+      log.innerHTML += `<span class="err">[FATAL] Eroare de conectare la backend-ul Flask.</span>`;
     }
     
     setLoader('scanLoader', false);
