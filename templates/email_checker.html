@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}SEC Toolkit | IOC Checker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>[ IOC CHECKER ]</h1>
+  <p>Analiză Threat Intelligence // Extrage și scanează indicatori via API VirusTotal</p>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">INPUT DATE</div>
+    
+    <label for="rawText">TEXT BRUT (EMAIL / LOG-URI / HEADERE)</label>
+    <textarea id="rawText" placeholder="Lipește textul aici pentru a extrage automat IP-urile, domeniile și URL-urile..."></textarea>
+
+    <label for="vtApiKey">VIRUSTOTAL API KEY (OPȚIONAL)</label>
+    <input type="password" id="vtApiKey" placeholder="Lasă gol pentru a sări peste scorurile VT">
+
+    <button class="btn" onclick="analyzeIOC()">Lansează Analiza</button>
+    <div class="loader" id="iocLoader">
+      <div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div>
+      <span>Se extrag indicatorii și se interoghează baza de date...</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">REZULTAT ANALIZĂ</div>
+    
+    <div id="iocStats" class="grid-2" style="display: none; margin-bottom: 1.5rem;">
+      <div class="stat-box">
+        <div class="num" id="statRisk">-</div>
+        <div class="lbl">NIVEL RISC</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="statMalicious">-</div>
+        <div class="lbl">DETECȚII MALITIOASE</div>
+      </div>
+    </div>
+    
+    <div class="output prompt" id="iocOutput">Sistem pregătit. Așteptare date...</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  async function analyzeIOC() {
+    setLoader('iocLoader', true);
+    const text = document.getElementById('rawText').value;
+    const apiKey = document.getElementById('vtApiKey').value;
+    const out = document.getElementById('iocOutput');
+    const stats = document.getElementById('iocStats');
+
+    out.innerHTML = 'Procesare text în curs...\n';
+    stats.style.display = 'none';
+
+    if (!text.trim()) {
+      out.innerHTML += '<span class="err">[ERROR] Câmpul de text este gol.</span>';
+      setLoader('iocLoader', false);
+      return;
+    }
+
+    try {
+      const res = await postJSON('/api/email/analyze', { text: text, api_key: apiKey });
+      
+      if (res.error) {
+        out.innerHTML += `<span class="err">[ERROR] ${res.error}</span>`;
+      } else {
+        // Actualizare statistici
+        stats.style.display = 'grid';
+        const riskEl = document.getElementById('statRisk');
+        riskEl.innerText = res.risk_level;
+        riskEl.style.color = res.risk_level === 'LOW' ? 'var(--green)' : (res.risk_level === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)');
+        document.getElementById('statMalicious').innerText = res.total_malicious_detections;
+
+        // Construire Log Detaliat
+        let html = `Indicatori de compromitere (IOCs) identificați:\n`;
+        html += `- IP-uri publice: ${res.indicators_found.public_ips.length}\n`;
+        html += `- IP-uri private (filtrate): ${res.indicators_found.private_ips.length}\n`;
+        html += `- Domenii: ${res.indicators_found.domains.length}\n`;
+        html += `- URL-uri: ${res.indicators_found.urls.length}\n\n`;
+
+        if (!res.api_key_provided) {
+           html += `<span class="warn">[WARN] Nu s-a furnizat API Key. Interogarea VirusTotal a fost abandonată.</span>\n\n`;
+        } else {
+           html += `<span class="info">[INFO] Se afișează scorurile din baza de date:</span>\n\n`;
+        }
+
+        res.vt_results.forEach(item => {
+          if (item.error) {
+            html += `[${item.type.toUpperCase()}] ${item.resource} -> <span class="err">Eroare API: ${item.error}</span>\n`;
+          } else if (item.status === 'submitted') {
+            html += `[${item.type.toUpperCase()}] ${item.resource} -> <span class="info">Trimis către VT (Pending)</span>\n`;
+          } else {
+            const isBad = item.malicious > 0;
+            const statusCls = isBad ? 'err' : 'ok';
+            html += `[${item.type.toUpperCase()}] ${item.resource} \n`;
+            html += `   └ Scor: <span class="${statusCls}">${item.malicious} malicious</span> / ${item.harmless} harmless\n`;
+            if (item.vt_link) html += `   └ Link: <a href="${item.vt_link}" target="_blank" style="color:var(--blue); text-decoration:none;">Vezi Raport »</a>\n`;
+          }
+        });
+
+        out.innerHTML = html;
+      }
+    } catch (e) {
+      out.innerHTML += `<span class="err">[FATAL] Eroare de conectare la backend-ul Flask.</span>`;
+    }
+    
+    setLoader('iocLoader', false);
+  }
+</script>
+{% endblock %}

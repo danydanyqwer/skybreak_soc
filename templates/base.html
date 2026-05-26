@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Security Toolkit{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #080c10;
+      --bg2:       #0d1117;
+      --bg3:       #111820;
+      --border:    #1e3a2f;
+      --green:     #00ff88;
+      --green-dim: #00aa55;
+      --green-glow:#00ff8833;
+      --red:       #ff3355;
+      --red-dim:   #aa2244;
+      --yellow:    #ffcc00;
+      --blue:      #00aaff;
+      --text:      #c8d8c0;
+      --text-dim:  #556655;
+      --mono:      'Share Tech Mono', monospace;
+      --sans:      'Rajdhani', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grid scanlines overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,136,0.015) 2px, rgba(0,255,136,0.015) 4px);
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────────── */
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo {
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--green);
+      letter-spacing: .15em;
+      padding: 1rem 2rem 1rem 0;
+      border-right: 1px solid var(--border);
+      margin-right: 1rem;
+      text-decoration: none;
+      text-shadow: 0 0 20px var(--green);
+    }
+    .nav-logo span { color: var(--text-dim); }
+    nav a {
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: .9rem 1.2rem;
+      font-size: .8rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      transition: color .2s, background .2s;
+      border-bottom: 2px solid transparent;
+    }
+    nav a:hover, nav a.active {
+      color: var(--green);
+      border-bottom-color: var(--green);
+      background: rgba(0,255,136,.04);
+    }
+
+    /* ── LAYOUT ─────────────────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+    /* ── CARD ────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green-dim), transparent);
+    }
+    .card-title {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--green);
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    /* ── FORM CONTROLS ───────────────────────────────────────────── */
+    label { font-size: .75rem; color: var(--text-dim); letter-spacing: .1em; display: block; margin-bottom: .3rem; }
+    input, textarea, select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .85rem;
+      padding: .6rem .8rem;
+      border-radius: 3px;
+      margin-bottom: 1rem;
+      transition: border-color .2s;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--green-dim);
+      box-shadow: 0 0 0 2px var(--green-glow);
+    }
+    textarea { min-height: 140px; resize: vertical; }
+
+    /* ── BUTTONS ─────────────────────────────────────────────────── */
+    .btn {
+      font-family: var(--sans);
+      font-weight: 700;
+      letter-spacing: .15em;
+      font-size: .85rem;
+      text-transform: uppercase;
+      padding: .65rem 1.5rem;
+      border: 1px solid var(--green-dim);
+      background: transparent;
+      color: var(--green);
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--green);
+      transform: translateX(-101%);
+      transition: transform .2s;
+      z-index: -1;
+    }
+    .btn:hover { color: var(--bg); }
+    .btn:hover::after { transform: translateX(0); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-danger { border-color: var(--red-dim); color: var(--red); }
+    .btn-danger::after { background: var(--red); }
+
+    /* ── BADGE / RISK ─────────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      font-family: var(--sans);
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      padding: .2rem .55rem;
+      border-radius: 2px;
+    }
+    .badge-green { background: rgba(0,255,136,.15); color: var(--green); border: 1px solid var(--green-dim); }
+    .badge-red   { background: rgba(255,51,85,.15);  color: var(--red);   border: 1px solid var(--red-dim); }
+    .badge-yellow{ background: rgba(255,204,0,.15);  color: var(--yellow); border: 1px solid #aa8800; }
+    .badge-blue  { background: rgba(0,170,255,.15);  color: var(--blue);  border: 1px solid #0077cc; }
+
+    /* ── OUTPUT / LOG ─────────────────────────────────────────────── */
+    .output {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1rem;
+      font-size: .8rem;
+      line-height: 1.7;
+      min-height: 80px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .output .ok  { color: var(--green); }
+    .output .err { color: var(--red); }
+    .output .warn{ color: var(--yellow); }
+    .output .info{ color: var(--blue); }
+
+    /* ── LOADER ───────────────────────────────────────────────────── */
+    .loader {
+      display: none;
+      align-items: center;
+      gap: .6rem;
+      color: var(--green-dim);
+      font-size: .8rem;
+      margin-top: .5rem;
+    }
+    .loader.active { display: flex; }
+    .loader-dot {
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.2s infinite;
+    }
+    .loader-dot:nth-child(2){ animation-delay:.2s; }
+    .loader-dot:nth-child(3){ animation-delay:.4s; }
+    @keyframes pulse { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+    /* ── TABLE ────────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+    th {
+      text-align: left; padding: .5rem .8rem;
+      background: var(--bg3);
+      color: var(--text-dim);
+      font-family: var(--sans);
+      letter-spacing: .1em;
+      font-size: .72rem;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: .5rem .8rem; border-bottom: 1px solid rgba(30,58,47,.5); }
+    tr:hover td { background: rgba(0,255,136,.03); }
+
+    /* ── GRID ─────────────────────────────────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+    @media(max-width:700px){ .grid-2,.grid-3 { grid-template-columns:1fr; } }
+
+    /* ── STAT BOX ─────────────────────────────────────────────────── */
+    .stat-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-box .num {
+      font-family: var(--sans);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+    .stat-box .lbl { font-size: .7rem; color: var(--text-dim); letter-spacing: .1em; margin-top: .2rem; }
+
+    /* ── PAGE HEADER ─────────────────────────────────────────────── */
+    .page-header {
+      padding: 2rem 0 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+    .page-header h1 {
+      font-family: var(--sans);
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: .2em;
+      color: var(--green);
+      text-shadow: 0 0 30px var(--green-glow);
+    }
+    .page-header p { color: var(--text-dim); font-size: .8rem; margin-top: .4rem; }
+
+    /* ── TERMINAL PREFIX ──────────────────────────────────────────── */
+    .prompt::before { content: '> '; color: var(--green-dim); }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="/">[<span>SEC</span>]TOOLKIT</a>
+  <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Home</a>
+  <a href="/fim" {% if request.path == '/fim' %}class="active"{% endif %}>FIM</a>
+  <a href="/email-checker" {% if request.path == '/email-checker' %}class="active"{% endif %}>IOC Checker</a>
+  <a href="/port-scanner" {% if request.path == '/port-scanner' %}class="active"{% endif %}>Port Scanner</a>
+</nav>
+
+<div class="container">
+  {% block content %}{% endblock %}
+</div>
+<footer style="text-align: center; margin-top: 5rem; padding: 2rem 0; color: var(--text-dim); font-size: 0.7rem; letter-spacing: 0.2em; border-top: 1px solid rgba(30, 58, 47, 0.3);">
+  // DESIGNED BY DAN GRIGORESCU // GREUCEANU_SOC v1.0
+</footer>
+<script>
+// Utilitar global: afiseaza loader
+function setLoader(id, active) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('active', active);
+}
+
+// Utilitar: POST JSON
+async function postJSON(url, data) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  return r.json();
+}
+
+// Formateaza timestamp
+function fmtTs(ts) {
+  if (!ts) return '-';
+  return new Date(ts).toLocaleString('ro-RO');
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

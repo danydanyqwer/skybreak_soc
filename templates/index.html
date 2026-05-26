@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}SEC Toolkit | Home{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>[ SYS_DASHBOARD ]</h1>
+  <p>Selectează un modul pentru a iniția analiza.</p>
+</div>
+
+<div class="grid-3">
+  <div class="card">
+    <div class="card-title">F.I.M.</div>
+    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem; min-height: 40px;">
+      Monitorizează integritatea fișierelor (SHA256) folosind comenzi native Linux.
+    </p>
+    <a href="/fim"><button class="btn">Inițializează</button></a>
+  </div>
+  
+  <div class="card">
+    <div class="card-title">IOC Checker</div>
+    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem; min-height: 40px;">
+      Extrage IP-uri și domenii și le scanează prin API-ul VirusTotal.
+    </p>
+    <a href="/email-checker"><button class="btn">Inițializează</button></a>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Port Scanner</div>
+    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem; min-height: 40px;">
+      Scanează porturi deschise folosind Sockets și NMAP în fundal.
+    </p>
+    <a href="/port-scanner"><button class="btn">Inițializează</button></a>
+  </div>
+</div>
+{% endblock %}

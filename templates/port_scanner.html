@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}SEC Toolkit | Port Scanner{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>[ PORT SCANNER ]</h1>
+  <p>Reconnaisance Rețea // Implementare cu Sockets Python & Subprocess (NMAP)</p>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">CONFIGURARE SCANARE</div>
+
+    <label for="targetHost">TARGET (IP SAU HOSTNAME)</label>
+    <input type="text" id="targetHost" placeholder="ex: 192.168.1.1 sau scanme.nmap.org">
+
+    <label for="scanMode">MOD SCANARE</label>
+    <select id="scanMode" onchange="toggleRange()">
+      <option value="common">Top 100 Porturi Comune (Rapid)</option>
+      <option value="range">Range Specific</option>
+      <option value="both">Comune + Range Specific</option>
+    </select>
+
+    <div id="rangeWrapper" style="display: none;">
+      <label for="portRange">RANGE PORTURI (ex: 1-1024 sau 80,443,8080)</label>
+      <input type="text" id="portRange" value="1-1024">
+    </div>
+
+    <label for="scanTimeout">TIMEOUT PER SOCKET (SECUNDE)</label>
+    <input type="number" id="scanTimeout" value="0.5" step="0.1" min="0.1" max="5">
+
+    <button class="btn" onclick="runScan()">Inițiază Scanarea</button>
+    
+    <div class="loader" id="scanLoader">
+      <div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div>
+      <span>Se trimit pachetele SYN... (poate dura în funcție de nr. porturilor)</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">STATUS TARGET</div>
+    
+    <div class="grid-2" style="margin-bottom: 1rem;">
+      <div class="stat-box">
+        <div class="num" id="statPorts">-</div>
+        <div class="lbl">PORTURI DESCHISE</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="statRisk">-</div>
+        <div class="lbl">RISC EXPOSURE</div>
+      </div>
+    </div>
+    
+    <div class="output prompt" id="scanLog">Așteptare introducere target...</div>
+  </div>
+</div>
+
+<div class="card" id="resultsTableCard" style="display: none;">
+  <div class="card-title">REZULTATE DETALIATE PORTURI</div>
+  <table id="portsTable">
+    <thead>
+      <tr>
+        <th>Port</th>
+        <th>Protocol</th>
+        <th>Stare</th>
+        <th>Serviciu Detectat</th>
+        <th>Nivel Risc</th>
+      </tr>
+    </thead>
+    <tbody>
+      </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleRange() {
+    const mode = document.getElementById('scanMode').value;
+    document.getElementById('rangeWrapper').style.display = (mode === 'range' || mode === 'both') ? 'block' : 'none';
+  }
+
+  async function runScan() {
+    setLoader('scanLoader', true);
+    const host = document.getElementById('targetHost').value;
+    const mode = document.getElementById('scanMode').value;
+    const range = document.getElementById('portRange').value;
+    const timeout = document.getElementById('scanTimeout').value;
+    const log = document.getElementById('scanLog');
+    const tableCard = document.getElementById('resultsTableCard');
+    const tbody = document.getElementById('portsTable').querySelector('tbody');
+
+    log.innerHTML = `Inițializare secvență scanare pentru host-ul <b>${host}</b>...\n`;
+    tableCard.style.display = 'none';
+    tbody.innerHTML = ''; // Curata tabelul anterior
+
+    if (!host.trim()) {
+      log.innerHTML += '<span class="err">[ERROR] Adresa target nespecificată.</span>';
+      setLoader('scanLoader', false);
+      return;
+    }
+
+    try {
+      const res = await postJSON('/api/portscan/scan', {
+        host: host,
+        mode: mode,
+        range: range,
+        timeout: timeout
+      });
+
+      if (res.error) {
+        log.innerHTML += `<span class="err">[ERROR] ${res.error}</span>`;
+      } else {
+        // Actualizare statistici globale
+        document.getElementById('statPorts').innerText = res.open_ports_count;
+        const riskEl = document.getElementById('statRisk');
+        riskEl.innerText = res.overall_risk;
+        riskEl.style.color = res.overall_risk === 'LOW' ? 'var(--green)' : (res.overall_risk === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)');
+
+        // Log general din output prompt
+        log.innerHTML = `
+<span class="ok">[SUCCESS] Scanare finalizată fără erori.</span>
+IP Rezolvat: ${res.ip}
+Durată Execuție: ${res.duration_seconds} secunde
+Total Porturi Interogate: ${res.ports_scanned}
+Mod Utilizat: ${res.scan_mode}
+        `;
+
+        // Populare Tabel Daca Exista Porturi Deschise
+        if (res.open_ports.length > 0) {
+          tableCard.style.display = 'block';
+          
+          res.open_ports.forEach(p => {
+            let badgeCls = 'badge-green';
+            if(p.risk === 'HIGH') badgeCls = 'badge-red';
+            else if (p.risk === 'MEDIUM') badgeCls = 'badge-yellow';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td style="color:var(--green); font-weight:bold;">${p.port}</td>
+              <td>${p.protocol.toUpperCase()}</td>
+              <td><span class="ok">${p.state}</span></td>
+              <td>${p.service}</td>
+              <td><span class="badge ${badgeCls}">${p.risk}</span></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      }
+    } catch (e) {
+      log.innerHTML += `<span class="err">[FATAL] Eroare de comunicare cu serverul backend. Verifică log-urile terminalului Python.</span>`;
+    }
+    
+    setLoader('scanLoader', false);
+  }
+</script>
+{% endblock %}

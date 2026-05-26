@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}SEC Toolkit | FIM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>[ F.I.M. ]</h1>
+  <p>File Integrity Monitor // Rulează: sha256sum, find, stat</p>
+</div>
+
+<div class="card">
+  <label for="dirPath">CALE DIRECTOR ȚINTĂ</label>
+  <input type="text" id="dirPath" placeholder="/cale/catre/director/linux" value="./">
+  
+  <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+    <button class="btn" onclick="runBaseline()">Creează Baseline</button>
+    <button class="btn btn-danger" onclick="runCheck()">Verifică Integritate</button>
+    <button class="btn" onclick="exportReport()" style="border-color: var(--blue); color: var(--blue);">Export CSV</button>
+  </div>
+  
+  <div class="loader" id="fimLoader">
+    <div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div>
+    <span>Se procesează cererea...</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">TERMINAL OUTPUT</div>
+  <div class="output prompt" id="fimOutput">Așteptare comandă...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  async function runBaseline() {
+    setLoader('fimLoader', true);
+    const dir = document.getElementById('dirPath').value;
+    document.getElementById('fimOutput').innerHTML = 'Inițializare scanare baseline...\n';
+    
+    try {
+      const res = await postJSON('/api/fim/scan', { directory: dir });
+      if (res.error) {
+        document.getElementById('fimOutput').innerHTML += `<span class="err">[ERROR] ${res.error}</span>`;
+      } else {
+        document.getElementById('fimOutput').innerHTML += `
+<span class="ok">[SUCCESS] Baseline generat cu succes!</span>
+Timestamp: ${fmtTs(res.timestamp)}
+Fișiere scanate: ${res.files_scanned}
+Director: ${res.directory}
+        `;
+      }
+    } catch (e) {
+      document.getElementById('fimOutput').innerHTML += `<span class="err">[FATAL] Eroare de rețea.</span>`;
+    }
+    setLoader('fimLoader', false);
+  }
+
+  async function runCheck() {
+    setLoader('fimLoader', true);
+    const dir = document.getElementById('dirPath').value;
+    document.getElementById('fimOutput').innerHTML = 'Verificare integritate în curs...\n';
+    
+    try {
+      const res = await postJSON('/api/fim/check', { directory: dir });
+      if (res.error) {
+        document.getElementById('fimOutput').innerHTML += `<span class="err">[ERROR] ${res.error}</span>`;
+      } else {
+        let out = `Status: <span class="${res.status === 'clean' ? 'ok' : 'err'}">${res.status.toUpperCase()}</span>\n`;
+        out += `Modificate: ${res.summary.modified} | Adăugate: ${res.summary.added} | Șterse: ${res.summary.deleted}\n\n`;
+        
+        if (res.status !== 'clean') {
+          res.modified.forEach(f => out += `<span class="warn">[MODIFIED]</span> ${f.path}\n`);
+          res.added.forEach(f => out += `<span class="err">[ADDED]</span> ${f}\n`);
+          res.deleted.forEach(f => out += `<span class="err">[DELETED]</span> ${f}\n`);
+        }
+        document.getElementById('fimOutput').innerHTML += out;
+      }
+    } catch (e) {
+      document.getElementById('fimOutput').innerHTML += `<span class="err">[FATAL] Eroare de rețea.</span>`;
+    }
+    setLoader('fimLoader', false);
+  }
+
+  async function exportReport() {
+    const dir = document.getElementById('dirPath').value;
+    const res = await postJSON('/api/fim/report', { directory: dir });
+    document.getElementById('fimOutput').innerHTML += `\n<span class="info">[INFO] Raport salvat la: ${res.report_path}</span>`;
+  }
+</script>
+{% endblock %}
