@@ -1,18 +1,5 @@
 
-
-# RAPORT FINAL DE PROIECT / PORTOFOLIU
-
 ## **Greuceanu_SOC – Security Operations Center & System Monitor**
-
-**Membru echipă:** Dan Grigorescu
-
-**Facultatea:** Electronică, Telecomunicații și Tehnologia Informației (ETTI)
-
-**Disciplina:** Curs Aplicativ de Linux si Python (CALP)
-
-**Tema aleasă:** Aplicație hibridă de securitate (FIM + Port Scanner cu CVE Mapping + IOC Checker)
-
----
 
 ### 1. PREREQUISITES & RUN (Cerințe de sistem și Configurare)
 
