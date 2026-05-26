@@ -88,19 +88,19 @@ Proiectul a fost dezvoltat de la zero, având ca punct de pornire conceptele teo
 
 #### **Modulele Dezvoltate și Logica de Funcționare:**
 
-1. **Oglinda Fermecată — F.I.M. (File Integrity Monitor):**
+1. **F.I.M. (File Integrity Monitor):**
 * **Interacțiune Linux CLI & Syscalls:** Modulul apelează comanda nativă `find` din Linux prin `subprocess.run` pentru a genera o listă recursivă a tuturor fișierelor dintr-un director țintă. Pentru fiecare fișier identificat, apelează utilitarul de sistem `sha256sum` pentru a calcula o amprentă digitală unică. De asemenea, folosește apelul de sistem `os.stat` pentru a extrage metadate critice: dimensiunea în bytes, permisiunile fișierului (în format octal) și timestamp-ul ultimei modificări.
 * **Mecanism de Redundanță (Fault Tolerance):** Dacă utilitarul CLI `sha256sum` lipsește din sistem sau returnează o eroare, codul face automat fallback pe o implementare internă pură de Python folosind biblioteca `hashlib`.
 * **Logică de Securitate & Alertare:** În faza de verificare, se compară starea curentă a fișierelor cu un baseline stocat într-un fișier securizat JSON. Folosind operații pe seturi (`set()`), se determină instantaneu fișierele adăugate, șterse sau modificate. În cazul identificării unei modificări neautorizate, modulul interoghează asincron **Telegram Bot API**, trimițând o alertă critică de securitate în timp real pe canalul administratorului. De asemenea, oferă posibilitatea exportării automate a unui raport detaliat în format `.csv`.
 
 
-2. **Descântecul Porților — Port Scanner cu CVE Vulnerability Mapping:**
+2. **Port Scanner cu CVE Vulnerability Mapping:**
 * **Logica de Rețea:** Realizează un *TCP Connect Scan* nativ. Modulul instanțiază obiecte de tip `socket.socket` și folosește funcția `connect_ex((host, port))` pentru a încerca realizarea unui TCP 3-way handshake. Returnarea codului `0` indică o poartă deschisă.
 * **Optimizare prin Multithreading:** Pentru a evita blocajele generate de timeout-uri rețelei, scanarea nu se face secvențial. S-a implementat paralelism folosind un pool de fire de execuție (`concurrent.futures.ThreadPoolExecutor`), permițând scanarea simultană a sute de porturi în mai puțin de o secundă.
 * **Integrare Nmap & Extensie Threat Intel (CVE Lookup):** Dacă sistemul dispune de utilitarul `nmap`, aplicația îl poate apela direct în fundal pentru a efectua o scanare avansată de versiuni (`nmap -sV`). Serviciile descoperite sunt trimise automat într-o funcție de lookup care interoghează în timp real API-ul oficial al Guvernului American (**NIST NVD - National Vulnerability Database**), extrăgând automat codurile CVE și scorurile de severitate CVSS asociate acelor servicii.
 
 
-3. **Vânătoarea de Zmei — IOC Checker (Indicatori de Compromitere):**
+3. **IOC Checker (Indicatori de Compromitere):**
 * **Parsare & Logică Avansată:** Modulul primește un text brut (corpul unui e-mail suspect, headere sau log-uri de sistem) și utilizează expresii regulate complexe (`re.compile`) pentru a identifica și extrage adrese IPv4, URL-uri și domenii.
 * **Filtrare Inteligentă:** Implementează o funcție dedicată de analiză a claselor de rețea (`_is_private_ip`) pentru a detecta și filtra adresele IP private sau de loopback (ex: `127.0.0.1`, `192.168.x.x`, `10.x.x.x`), împiedicând trimiterea de date locale inutile către internet.
 * **Threat Intelligence Integration:** Indicatorii publici extrași sunt transmiși controlat către **API-ul VirusTotal v3** (folosind encodare Base64 securizată pentru URL-uri). Răspunsul JSON pachetează date despre reputația globală a indicatorului, numărul de motoare antivirus care l-au flagat ca malițios, țara de origine și compania de hosting (AS Owner). Pe baza acestor date, backend-ul calculează algoritmic un scor global de risc (LOW, MEDIUM, HIGH, CRITICAL).
